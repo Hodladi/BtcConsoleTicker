@@ -1,9 +1,7 @@
-name: Build .NET Console Application
+name: Build and Release .NET Console Application
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
     branches: [ "main" ]
 
 jobs:
@@ -33,3 +31,24 @@ jobs:
       with:
         name: Published Application
         path: ./publish
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v1.0.0 # Replace with your versioning scheme
+        release_name: Release v1.0.0
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./publish/TickerConsole.exe # Adjust this path if needed
+        asset_name: TickerConsole.exe
+        asset_content_type: application/octet-stream
