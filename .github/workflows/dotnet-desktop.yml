@@ -1,0 +1,50 @@
+name: Build .NET Console App
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Use Ubuntu as the base runner
+
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        arch: [x86, x64]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: "8.0.x"
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build for target platform
+      run: |
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          dotnet publish -c Release -r win-${{ matrix.arch }} --self-contained -p:PublishSingleFile=true -o ./publish/windows-${{ matrix.arch }}
+        else
+          dotnet publish -c Release -r linux-${{ matrix.arch }} --self-contained -p:PublishSingleFile=true -o ./publish/linux-${{ matrix.arch }}
+      shell: bash
+
+    - name: Upload Windows artifacts
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-${{ matrix.arch }}
+        path: ./publish/windows-${{ matrix.arch }}
+
+    - name: Upload Linux artifacts
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v3
+      with:
+        name: linux-${{ matrix.arch }}
+        path: ./publish/linux-${{ matrix.arch }}
