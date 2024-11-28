@@ -14,6 +14,7 @@ jobs:
         arch: [x64, x86]
 
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15  # Increase timeout for longer builds
 
     steps:
     - name: Checkout code
@@ -25,14 +26,14 @@ jobs:
         dotnet-version: "8.0.x"
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore TickerConsole/TickerConsole.csproj
 
     - name: Build for target platform
       run: |
         if [ "${{ matrix.os }}" == "windows-latest" ]; then
-          dotnet publish -c Release -r win-${{ matrix.arch }} --self-contained -p:PublishSingleFile=true -o ./publish/windows-${{ matrix.arch }}
+          dotnet publish TickerConsole/TickerConsole.csproj -c Release -r win-${{ matrix.arch }} --self-contained -p:PublishSingleFile=true -o ./publish/windows-${{ matrix.arch }}
         else
-          dotnet publish -c Release -r linux-${{ matrix.arch }} --self-contained -p:PublishSingleFile=true -o ./publish/linux-${{ matrix.arch }}
+          dotnet publish TickerConsole/TickerConsole.csproj -c Release -r linux-${{ matrix.arch }} --self-contained -p:PublishSingleFile=true -o ./publish/linux-${{ matrix.arch }}
         fi
       shell: bash
 
