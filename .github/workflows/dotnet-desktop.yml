@@ -1,4 +1,4 @@
-name: Build .NET Console App
+name: Build .NET Console Application
 
 on:
   push:
@@ -8,13 +8,7 @@ on:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest]
-        arch: [x64, x86]
-
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 15  # Increase timeout for longer builds
+    runs-on: windows-latest
 
     steps:
     - name: Checkout code
@@ -23,30 +17,19 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: "8.0.x"
+        dotnet-version: '8.0.x'
 
     - name: Restore dependencies
-      run: dotnet restore TickerConsole/TickerConsole.csproj
+      run: dotnet restore
 
-    - name: Build for target platform
-      run: |
-        if [ "${{ matrix.os }}" == "windows-latest" ]; then
-          dotnet publish TickerConsole/TickerConsole.csproj -c Release -r win-${{ matrix.arch }} --self-contained -p:PublishSingleFile=true -o ./publish/windows-${{ matrix.arch }}
-        else
-          dotnet publish TickerConsole/TickerConsole.csproj -c Release -r linux-${{ matrix.arch }} --self-contained -p:PublishSingleFile=true -o ./publish/linux-${{ matrix.arch }}
-        fi
-      shell: bash
+    - name: Build application
+      run: dotnet build --configuration Release
 
-    - name: Upload Windows artifacts
-      if: matrix.os == 'windows-latest'
+    - name: Publish application
+      run: dotnet publish --configuration Release --self-contained --runtime win-x64 --output ./publish
+
+    - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
-        name: windows-${{ matrix.arch }}
-        path: ./publish/windows-${{ matrix.arch }}
-
-    - name: Upload Linux artifacts
-      if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v3
-      with:
-        name: linux-${{ matrix.arch }}
-        path: ./publish/linux-${{ matrix.arch }}
+        name: Published Application
+        path: ./publish
