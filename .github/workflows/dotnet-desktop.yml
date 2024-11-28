@@ -33,6 +33,7 @@ jobs:
           dotnet publish -c Release -r win-${{ matrix.arch }} --self-contained -p:PublishSingleFile=true -o ./publish/windows-${{ matrix.arch }}
         else
           dotnet publish -c Release -r linux-${{ matrix.arch }} --self-contained -p:PublishSingleFile=true -o ./publish/linux-${{ matrix.arch }}
+        fi
       shell: bash
 
     - name: Upload Windows artifacts
