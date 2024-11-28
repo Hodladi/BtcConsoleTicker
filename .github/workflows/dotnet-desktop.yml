@@ -6,7 +6,12 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        runtime: [win-x64, linux-x64]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - name: Checkout code
@@ -20,17 +25,36 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
 
-    - name: Build application
-      run: dotnet build --configuration Release
-
-    - name: Publish application
-      run: dotnet publish --configuration Release --self-contained --runtime win-x64 --output ./publish
+    - name: Build and Publish application
+      run: |
+        dotnet publish --configuration Release --self-contained --runtime ${{ matrix.runtime }} --output ./publish/${{ matrix.runtime }}
+      shell: bash
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
-        name: Published Application
-        path: ./publish
+        name: Published Application - ${{ matrix.runtime }}
+        path: ./publish/${{ matrix.runtime }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download Windows artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: Published Application - win-x64
+        path: ./publish/win-x64
+
+    - name: Download Linux artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: Published Application - linux-x64
+        path: ./publish/linux-x64
 
     - name: Create GitHub Release
       id: create_release
@@ -38,17 +62,27 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.run_number }}-${{ github.sha }} # Use unique tag
+        tag_name: ${{ github.run_number }}-${{ github.sha }} # Unique tag
         release_name: Release ${{ github.run_number }}
         draft: false
         prerelease: false
 
-    - name: Upload Release Asset
+    - name: Upload Windows Release Asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./publish/TickerConsole.exe # Ensure this path is correct
-        asset_name: TickerConsole.exe
+        asset_path: ./publish/win-x64/TickerConsole.exe
+        asset_name: TickerConsole-win-x64.exe
+        asset_content_type: application/octet-stream
+
+    - name: Upload Linux Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./publish/linux-x64/TickerConsole
+        asset_name: TickerConsole-linux-x64
         asset_content_type: application/octet-stream
