@@ -38,8 +38,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v1.0.0 # Replace with your versioning scheme
-        release_name: Release v1.0.0
+        tag_name: ${{ github.run_number }}-${{ github.sha }} # Use unique tag
+        release_name: Release ${{ github.run_number }}
         draft: false
         prerelease: false
 
@@ -49,6 +49,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./publish/TickerConsole.exe # Adjust this path if needed
+        asset_path: ./publish/TickerConsole.exe # Ensure this path is correct
         asset_name: TickerConsole.exe
         asset_content_type: application/octet-stream
